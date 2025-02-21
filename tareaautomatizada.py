@@ -1,6 +1,7 @@
 import os
 import time
 import subprocess
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -9,6 +10,19 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+
+# Configuración del bot de Telegram
+TELEGRAM_BOT_TOKEN = "7922512452:AAGhfzYMzhJPfV1TA1dBy2w6hICCIXHdNds"
+TELEGRAM_CHAT_ID = "5540982553"
+
+def enviar_mensaje_telegram(mensaje):
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    datos = {"chat_id": TELEGRAM_CHAT_ID, "text": mensaje}
+    try:
+        requests.post(url, data=datos)
+        print("📩 Mensaje enviado a Telegram")
+    except Exception as e:
+        print(f"⚠️ Error enviando mensaje a Telegram: {e}")
 
 # Verificar si Chrome está instalado en el VPS
 def instalar_chrome():
@@ -78,10 +92,21 @@ try:
 
     # 6. Verificar si el archivo se descargó en la carpeta "excel"
     archivos = os.listdir(download_dir)
+    archivo_descargado = None
     for archivo in archivos:
         if archivo.endswith(".xls") or archivo.endswith(".xlsx"):
-            print(f"✅ Archivo descargado en: {os.path.join(download_dir, archivo)}")
+            archivo_descargado = os.path.join(download_dir, archivo)
+            break
+
+    if archivo_descargado:
+        mensaje = f"✅ Descarga completada.\nArchivo: {archivo_descargado}"
+        enviar_mensaje_telegram(mensaje)
+    else:
+        enviar_mensaje_telegram("⚠️ No se encontró el archivo Excel después de la descarga.")
+
+except Exception as e:
+    mensaje_error = f"❌ Error en el script:\n{str(e)}"
+    enviar_mensaje_telegram(mensaje_error)
 
 finally:
-    # Cerrar el navegador
     driver.quit()
